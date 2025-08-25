@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Julius — Workout Tracker (Mon-Fri)</title>
+    <style>
+      :root {
+        --bg: #0f1220;
+        --card: #161a2b;
+        --muted: #8a90a6;
+        --text: #e7e9f5;
+        --accent: #7c9cff;
+        --accent-2: #38d39f;
+        --danger: #ff6b6b;
+        --warn: #ffcc66;
+        --shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        --radius: 14px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter,
+          "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
+          "Segoe UI Emoji";
+        background: radial-gradient(
+          1000px 600px at 20% -10%,
+          #1b2040 0%,
+          #0f1220 60%
+        );
+        color: var(--text);
+        line-height: 1.45;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: linear-gradient(
+          180deg,
+          rgba(15, 18, 32, 0.95),
+          rgba(15, 18, 32, 0.75)
+        );
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      h1 {
+        font-size: 1.35rem;
+        margin: 0;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .pillbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+      .pill {
+        padding: 8px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        cursor: pointer;
+        user-select: none;
+        color: var(--text);
+        background: #12162a;
+        transition: all 0.2s ease;
+      }
+      .pill.active {
+        background: var(--accent);
+        border-color: transparent;
+        color: #0b0f1f;
+      }
+      .pill:hover {
+        transform: translateY(-1px);
+      }
+      .controls {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        background: var(--accent);
+        color: #0b0f1f;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+        transition: transform 0.12s ease, box-shadow 0.12s ease,
+          opacity 0.2s ease;
+      }
+      .btn.secondary {
+        background: #242a46;
+        color: var(--text);
+        box-shadow: none;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .btn.warn {
+        background: var(--warn);
+        color: #271e00;
+      }
+      .btn.danger {
+        background: var(--danger);
+        color: #2b0a0a;
+      }
+      .btn.ghost {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: none;
+        color: var(--text);
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .search {
+        flex: 1 1 240px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #12162a;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 10px 12px;
+        color: var(--text);
+      }
+      .search input {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--text);
+        width: 100%;
+        font-size: 1rem;
+      }
+      main {
+        padding: 16px;
+      }
+      .grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 680px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .card {
+        background: linear-gradient(180deg, #141a31, #12172b);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .card .media {
+        width: 100%;
+        aspect-ratio: 16/9;
+        background: #0c0f1f;
+        background-image: linear-gradient(
+          120deg,
+          rgba(124, 156, 255, 0.15),
+          rgba(56, 211, 159, 0.12)
+        );
+        position: relative;
+      }
+      .card .media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        opacity: 0.95;
+      }
+      .card .media button.edit-img {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        font-size: 0.85rem;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(20, 26, 49, 0.75);
+        color: var(--text);
+        cursor: pointer;
+        backdrop-filter: blur(8px);
+      }
+      .card .content {
+        padding: 12px 14px 14px;
+      }
+      .title {
+        font-weight: 800;
+        font-size: 1.05rem;
+        margin: 0 0 6px;
+      }
+      .meta {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 0.88rem;
+        margin-bottom: 8px;
+      }
+      .chip {
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: #0f1430;
+      }
+      .notes {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-top: 4px;
+      }
+      .sets {
+        margin-top: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .set {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px;
+        border: 1px dashed rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        background: rgba(20, 26, 49, 0.5);
+      }
+      .set .left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .bubble {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #0e1430;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: var(--muted);
+        font-weight: 700;
+      }
+      .counter {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .counter button {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: #101736;
+        color: var(--text);
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .counter .val {
+        min-width: 28px;
+        text-align: center;
+        font-weight: 800;
+      }
+      .complete {
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: #0f1738;
+        color: var(--accent-2);
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .complete.done {
+        background: rgba(56, 211, 159, 0.15);
+        color: #0d3b2c;
+        border-color: rgba(56, 211, 159, 0.35);
+      }
+      .rest {
+        margin-top: 10px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .timer {
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: #0f1430;
+        color: var(--text);
+        font-weight: 700;
+      }
+      .empty {
+        opacity: 0.8;
+        border-style: solid;
+        border-color: rgba(255, 255, 255, 0.06);
+      }
+      footer {
+        padding: 20px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="row">
+          <div>
+            <h1>Workout Tracker</h1>
+            <div class="sub">
+              <span id="today"></span> • Auto picks today's plan, or choose a
+              different day.
+            </div>
+          </div>
+        </div>
+        <div class="pillbar" id="dayPills"></div>
+        <div class="controls">
+          <div class="search" title="Search exercises">
+            🔎
+            <input
+              id="searchInput"
+              placeholder="Search exercises (e.g., squat, pulldown)"
+            />
+          </div>
+          <button class="btn" id="startBtn">▶ Start Workout</button>
+          <button class="btn secondary" id="nextBtn">Next Incomplete ⤴</button>
+          <button
+            class="btn ghost"
+            id="resetBtn"
+            title="Clear today's progress"
+          >
+            Reset Day
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="grid" id="exerciseGrid"></section>
+    </main>
+
+    <footer>
+      Built for Julius • Progress saved in your browser (localStorage)
+    </footer>
+
+    <script>
+      // ---- Plan Data (Mon-Fri) with targets and rest seconds ----
+      const plan = {
+        Monday: [
+          {
+            name: "Bench Press (Barbell or DB)",
+            repRange: "6-8",
+            targetReps: 8,
+            sets: 4,
+            restSec: 150,
+            tempo: "2-0-1-1",
+            notes: "Last set RPE 8",
+            image: "https://via.placeholder.com/800x450?text=Bench+Press",
+          },
+          {
+            name: "Incline DB Press",
+            repRange: "8-12",
+            targetReps: 12,
+            sets: 3,
+            restSec: 90,
+            tempo: "2-0-1-1",
+            notes: "1-2 reps in reserve",
+            image: "https://via.placeholder.com/800x450?text=Incline+DB+Press",
+          },
+          {
+            name: "Seated DB Shoulder Press",
+            repRange: "8-10",
+            targetReps: 10,
+            sets: 3,
+            restSec: 120,
+            tempo: "2-0-1-1",
+            notes: "Neutral grip if needed",
+            image: "https://via.placeholder.com/800x450?text=DB+Shoulder+Press",
+          },
+          {
+            name: "DB Lateral Raise",
+            repRange: "12-15",
+            targetReps: 15,
+            sets: 3,
+            restSec: 70,
+            tempo: "2-1-1-1",
+            notes: "Strict form",
+            image: "https://via.placeholder.com/800x450?text=Lateral+Raise",
+          },
+          {
+            name: "Cable or Band Fly",
+            repRange: "12-15",
+            targetReps: 15,
+            sets: 2,
+            restSec: 60,
+            tempo: "2-1-1-1",
+            notes: "Squeeze at peak",
+            image: "https://via.placeholder.com/800x450?text=Cable+Fly",
+          },
+          {
+            name: "Triceps Rope Pushdown or Dips",
+            repRange: "10-12",
+            targetReps: 12,
+            sets: 3,
+            restSec: 75,
+            tempo: "2-0-1-1",
+            notes: "Add weight if easy",
+            image: "https://via.placeholder.com/800x450?text=Triceps+Pushdown",
+          },
+        ],
+        Tuesday: [
+          {
+            name: "Back Squat or Goblet Squat",
+            repRange: "5-7",
+            targetReps: 7,
+            sets: 4,
+            restSec: 160,
+            tempo: "3-0-1-1",
+            notes: "Last set RPE 8",
+            image: "https://via.placeholder.com/800x450?text=Squat",
+          },
+          {
+            name: "Single-leg Press or Split Squat",
+            repRange: "8-12",
+            targetReps: 12,
+            sets: 3,
+            restSec: 120,
+            tempo: "2-0-1-1",
+            notes: "Control depth",
+            image: "https://via.placeholder.com/800x450?text=Single-leg+Press",
+          },
+          {
+            name: "Romanian Deadlift",
+            repRange: "8-10",
+            targetReps: 10,
+            sets: 3,
+            restSec: 120,
+            tempo: "3-0-1-1",
+            notes: "Feel hamstrings",
+            image: "https://via.placeholder.com/800x450?text=RDL",
+          },
+          {
+            name: "Walking Lunges",
+            repRange: "10/leg",
+            targetReps: 10,
+            sets: 2,
+            restSec: 75,
+            tempo: "2-0-1-1",
+            notes: "Light or moderate",
+            image: "https://via.placeholder.com/800x450?text=Walking+Lunge",
+          },
+          {
+            name: "Leg Extension",
+            repRange: "12-15",
+            targetReps: 15,
+            sets: 2,
+            restSec: 60,
+            tempo: "2-1-1-1",
+            notes: "Squeeze top",
+            image: "https://via.placeholder.com/800x450?text=Leg+Extension",
+          },
+          {
+            name: "Standing or Seated Calf Raise",
+            repRange: "10-15",
+            targetReps: 15,
+            sets: 3,
+            restSec: 60,
+            tempo: "2-1-1-1",
+            notes: "Full stretch",
+            image: "https://via.placeholder.com/800x450?text=Calf+Raise",
+          },
+        ],
+        Wednesday: [
+          {
+            name: "Deadlift (Conventional or Trap-bar)",
+            repRange: "3-5",
+            targetReps: 5,
+            sets: 3,
+            restSec: 180,
+            tempo: "1-0-1-1",
+            notes: "Leave 1-2 reps",
+            image: "https://via.placeholder.com/800x450?text=Deadlift",
+          },
+          {
+            name: "Pull-ups or Lat Pulldown",
+            repRange: "6-10",
+            targetReps: 10,
+            sets: 4,
+            restSec: 120,
+            tempo: "2-0-1-1",
+            notes: "Add weight if over 10 easy",
+            image: "https://via.placeholder.com/800x450?text=Lat+Pulldown",
+          },
+          {
+            name: "One-arm DB Row or Chest-supported Row",
+            repRange: "8-12",
+            targetReps: 12,
+            sets: 3,
+            restSec: 90,
+            tempo: "2-0-1-1",
+            notes: "No torso twist",
+            image: "https://via.placeholder.com/800x450?text=DB+Row",
+          },
+          {
+            name: "Seated Cable Row",
+            repRange: "10-12",
+            targetReps: 12,
+            sets: 2,
+            restSec: 90,
+            tempo: "2-1-1-1",
+            notes: "Pause at chest",
+            image: "https://via.placeholder.com/800x450?text=Cable+Row",
+          },
+          {
+            name: "Face Pulls",
+            repRange: "12-15",
+            targetReps: 15,
+            sets: 3,
+            restSec: 60,
+            tempo: "2-1-1-1",
+            notes: "External rotation",
+            image: "https://via.placeholder.com/800x450?text=Face+Pull",
+          },
+          {
+            name: "EZ-bar or DB Curl",
+            repRange: "10-12",
+            targetReps: 12,
+            sets: 3,
+            restSec: 75,
+            tempo: "2-0-1-1",
+            notes: "No swinging",
+            image: "https://via.placeholder.com/800x450?text=DB+Curl",
+          },
+          {
+            name: "Hammer Curl",
+            repRange: "10-12",
+            targetReps: 12,
+            sets: 2,
+            restSec: 60,
+            tempo: "2-0-1-1",
+            notes: "Neutral grip",
+            image: "https://via.placeholder.com/800x450?text=Hammer+Curl",
+          },
+        ],
+        Thursday: [
+          {
+            name: "Hip Thrust (Barbell or DB)",
+            repRange: "6-8",
+            targetReps: 8,
+            sets: 4,
+            restSec: 120,
+            tempo: "2-1-1-1",
+            notes: "Squeeze top 1s",
+            image: "https://via.placeholder.com/800x450?text=Hip+Thrust",
+          },
+          {
+            name: "Front Squat or Hack Squat",
+            repRange: "6-8",
+            targetReps: 8,
+            sets: 3,
+            restSec: 160,
+            tempo: "3-0-1-1",
+            notes: "Upright torso",
+            image: "https://via.placeholder.com/800x450?text=Front+Squat",
+          },
+          {
+            name: "Good Morning or 45 Degree Back Extension",
+            repRange: "10-12",
+            targetReps: 12,
+            sets: 3,
+            restSec: 90,
+            tempo: "2-0-1-1",
+            notes: "Neutral spine",
+            image: "https://via.placeholder.com/800x450?text=Back+Extension",
+          },
+          {
+            name: "Hamstring Curl",
+            repRange: "10-15",
+            targetReps: 15,
+            sets: 3,
+            restSec: 75,
+            tempo: "2-1-1-1",
+            notes: "Slow eccentric",
+            image: "https://via.placeholder.com/800x450?text=Hamstring+Curl",
+          },
+          {
+            name: "Single-leg Romanian Deadlift",
+            repRange: "8-10/leg",
+            targetReps: 10,
+            sets: 2,
+            restSec: 75,
+            tempo: "2-0-1-1",
+            notes: "Balance and control",
+            image: "https://via.placeholder.com/800x450?text=Single-leg+RDL",
+          },
+        ],
+        Friday: [
+          {
+            name: "DB Bench Press (moderate)",
+            repRange: "10-12",
+            targetReps: 12,
+            sets: 3,
+            restSec: 90,
+            tempo: "2-0-1-1",
+            notes: "1-2 RIR",
+            image: "https://via.placeholder.com/800x450?text=DB+Bench",
+          },
+          {
+            name: "Goblet Squat (moderate)",
+            repRange: "12-15",
+            targetReps: 15,
+            sets: 3,
+            restSec: 90,
+            tempo: "2-0-1-1",
+            notes: "Constant tension",
+            image: "https://via.placeholder.com/800x450?text=Goblet+Squat",
+          },
+          {
+            name: "Lat Pulldown or Assisted Pull-up",
+            repRange: "10-12",
+            targetReps: 12,
+            sets: 3,
+            restSec: 90,
+            tempo: "2-0-1-1",
+            notes: "Full stretch",
+            image: "https://via.placeholder.com/800x450?text=Lat+Pulldown",
+          },
+          {
+            name: "Arnold Press",
+            repRange: "10-12",
+            targetReps: 12,
+            sets: 3,
+            restSec: 80,
+            tempo: "2-0-1-1",
+            notes: "Smooth rotation",
+            image: "https://via.placeholder.com/800x450?text=Arnold+Press",
+          },
+          {
+            name: "Cable Fly or Pec-deck",
+            repRange: "12-15",
+            targetReps: 15,
+            sets: 2,
+            restSec: 60,
+            tempo: "2-1-1-1",
+            notes: "Squeeze",
+            image: "https://via.placeholder.com/800x450?text=Pec+Deck",
+          },
+          {
+            name: "Leg Curl or Nordic Eccentrics",
+            repRange: "12-15",
+            targetReps: 15,
+            sets: 2,
+            restSec: 80,
+            tempo: "3-0-1-1",
+            notes: "Ham focus",
+            image: "https://via.placeholder.com/800x450?text=Leg+Curl",
+          },
+          {
+            name: "Superset: Curl + Triceps Pushdown",
+            repRange: "12-15 each",
+            targetReps: 15,
+            sets: 2,
+            restSec: 60,
+            tempo: "2-0-1-1",
+            notes: "Minimal rest",
+            image: "https://via.placeholder.com/800x450?text=Curl+%2B+Pushdown",
+          },
+        ],
+      };
+
+      // ---- Julius weights for suggestions ----
+      const weights = {
+        "Single-leg Press": 100,
+        "Leg Extension": 85,
+        "Hamstring Curl": 115,
+        "Sumo Squat": 60,
+        "Lat Pulldown": 200,
+        "Cable Row": 140,
+        "Face Pull": 100,
+        "Reverse Cable Fly": 20,
+        "Bicep Curl": 25,
+        "DB Press": 50,
+        "Arnold Press": 20,
+        "Shoulder Shrug": 45,
+        "Lateral Raise": 15,
+        "Triceps Pushdown": 90,
+      };
+
+      // Map an exercise name to a suggested weight
+      function suggestedWeightFor(exName) {
+        const norm = exName.toLowerCase();
+        if (norm.includes("bench") && weights["DB Press"])
+          return weights["DB Press"];
+        if (norm.includes("triceps") && weights["Triceps Pushdown"])
+          return weights["Triceps Pushdown"];
+        if (norm.includes("cable row") && weights["Cable Row"])
+          return weights["Cable Row"];
+        if (norm.includes("lat pulldown") && weights["Lat Pulldown"])
+          return weights["Lat Pulldown"];
+        if (norm.includes("hamstring curl") && weights["Hamstring Curl"])
+          return weights["Hamstring Curl"];
+        if (norm.includes("leg extension") && weights["Leg Extension"])
+          return weights["Leg Extension"];
+        if (norm.includes("lateral raise") && weights["Lateral Raise"])
+          return weights["Lateral Raise"];
+        if (norm.includes("arnold press") && weights["Arnold Press"])
+          return weights["Arnold Press"];
+        // simple fuzzy match
+        for (const [k, v] of Object.entries(weights)) {
+          if (norm.includes(k.toLowerCase())) return v;
+        }
+        return null;
+      }
+
+      // Local storage helpers
+      const LS_PROGRESS_PREFIX = "jt_progress_"; // per date
+      const LS_IMAGES = "jt_images";
+      function todayKey() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+      function saveProgress(dayName, progress) {
+        const key = LS_PROGRESS_PREFIX + todayKey() + "_" + dayName;
+        localStorage.setItem(key, JSON.stringify(progress));
+      }
+      function loadProgress(dayName) {
+        const key = LS_PROGRESS_PREFIX + todayKey() + "_" + dayName;
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : null;
+      }
+      function saveImageMap(map) {
+        localStorage.setItem(LS_IMAGES, JSON.stringify(map));
+      }
+      function loadImageMap() {
+        try {
+          return JSON.parse(localStorage.getItem(LS_IMAGES)) || {};
+        } catch (e) {
+          return {};
+        }
+      }
+
+      // DOM
+      const dayPills = document.getElementById("dayPills");
+      const exerciseGrid = document.getElementById("exerciseGrid");
+      const searchInput = document.getElementById("searchInput");
+      const startBtn = document.getElementById("startBtn");
+      const nextBtn = document.getElementById("nextBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const todaySpan = document.getElementById("today");
+
+      // Today
+      const weekdayNames = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+      const now = new Date();
+      const todayName = weekdayNames[now.getDay()];
+      todaySpan.textContent = `${now.toLocaleDateString()} (${todayName})`;
+
+      // Build pills
+      let activeDay = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+      ].includes(todayName)
+        ? todayName
+        : "Monday";
+      function renderPills() {
+        dayPills.innerHTML = "";
+        ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].forEach(
+          (d) => {
+            const btn = document.createElement("div");
+            btn.className = "pill" + (d === activeDay ? " active" : "");
+            btn.textContent = d + (d === todayName ? " • Today" : "");
+            btn.addEventListener("click", () => {
+              activeDay = d;
+              renderPills();
+              renderExercises();
+            });
+            dayPills.appendChild(btn);
+          }
+        );
+      }
+
+      // Core render
+      let workoutStarted = false;
+      let imageMap = loadImageMap();
+
+      function buildSetState(ex) {
+        const arr = [];
+        for (let i = 0; i < ex.sets; i++) {
+          arr.push({ reps: 0, done: false });
+        }
+        return arr;
+      }
+
+      function getProgress(dayName) {
+        let prog = loadProgress(dayName);
+        if (!prog) {
+          prog = {};
+          const dayList = plan[dayName] || [];
+          dayList.forEach((ex, idx) => {
+            prog[idx] = buildSetState(ex);
+          });
+          saveProgress(dayName, prog);
+        }
+        return prog;
+      }
+
+      function percentCompleteFor(progress, exIdx, ex) {
+        const sets = progress[exIdx] || [];
+        let done = sets.filter((s) => s.done).length;
+        return Math.round((done / ex.sets) * 100);
+      }
+
+      function restCountdown(el, seconds) {
+        let remain = seconds;
+        el.textContent = formatTime(remain);
+        const iv = setInterval(() => {
+          remain--;
+          el.textContent = formatTime(remain);
+          if (remain <= 0) {
+            clearInterval(iv);
+            el.textContent = "Rest done!";
+            if (navigator.vibrate) navigator.vibrate([120, 70, 120]);
+          }
+        }, 1000);
+      }
+      function formatTime(s) {
+        const m = Math.floor(s / 60);
+        const r = s % 60;
+        return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+      }
+
+      function renderExercises() {
+        const list = plan[activeDay] || [];
+        let progress = getProgress(activeDay);
+        const q = (searchInput.value || "").trim().toLowerCase();
+
+        exerciseGrid.innerHTML = "";
+        list.forEach((ex, idx) => {
+          if (q && !ex.name.toLowerCase().includes(q)) return;
+          const card = document.createElement("article");
+          card.className = "card";
+          const media = document.createElement("div");
+          media.className = "media";
+          const img = document.createElement("img");
+          img.src = imageMap[ex.name] || ex.image;
+          img.alt = ex.name;
+          media.appendChild(img);
+
+          const editBtn = document.createElement("button");
+          editBtn.className = "edit-img";
+          editBtn.textContent = "Edit Image";
+          editBtn.addEventListener("click", () => {
+            const url = prompt(
+              "Paste an image URL for this exercise:",
+              imageMap[ex.name] || ex.image
+            );
+            if (url) {
+              imageMap[ex.name] = url;
+              saveImageMap(imageMap);
+              img.src = url;
+            }
+          });
+          media.appendChild(editBtn);
+
+          const content = document.createElement("div");
+          content.className = "content";
+
+          const title = document.createElement("h3");
+          title.className = "title";
+          title.textContent = ex.name;
+          content.appendChild(title);
+
+          const meta = document.createElement("div");
+          meta.className = "meta";
+          const setsChip = document.createElement("span");
+          setsChip.className = "chip";
+          setsChip.textContent = `${ex.sets} sets × ${ex.repRange}`;
+          const restChip = document.createElement("span");
+          restChip.className = "chip";
+          restChip.textContent = `Rest ${Math.round(ex.restSec)}s`;
+          const tempoChip = document.createElement("span");
+          tempoChip.className = "chip";
+          tempoChip.textContent = `Tempo ${ex.tempo}`;
+          meta.appendChild(setsChip);
+          meta.appendChild(restChip);
+          meta.appendChild(tempoChip);
+
+          const w = suggestedWeightFor(ex.name);
+          if (w) {
+            const wChip = document.createElement("span");
+            wChip.className = "chip";
+            wChip.textContent = `Suggested: ${w} lb`;
+            meta.appendChild(wChip);
+          }
+          content.appendChild(meta);
+
+          if (ex.notes) {
+            const notes = document.createElement("div");
+            notes.className = "notes";
+            notes.textContent = ex.notes;
+            content.appendChild(notes);
+          }
+
+          const setsWrap = document.createElement("div");
+          setsWrap.className = "sets";
+          const setStates = progress[idx] || buildSetState(ex);
+
+          setStates.forEach((st, sIdx) => {
+            const setEl = document.createElement("div");
+            setEl.className = "set" + (st.done ? " done" : "");
+
+            const left = document.createElement("div");
+            left.className = "left";
+            const bubble = document.createElement("div");
+            bubble.className = "bubble";
+            bubble.textContent = sIdx + 1;
+            left.appendChild(bubble);
+
+            const counter = document.createElement("div");
+            counter.className = "counter";
+            const minus = document.createElement("button");
+            minus.textContent = "-";
+            const val = document.createElement("div");
+            val.className = "val";
+            val.textContent = st.reps;
+            const plus = document.createElement("button");
+            plus.textContent = "+";
+            counter.appendChild(minus);
+            counter.appendChild(val);
+            counter.appendChild(plus);
+            left.appendChild(counter);
+
+            const target = document.createElement("div");
+            target.className = "chip";
+            target.textContent = `Target ${ex.targetReps}${
+              /leg/.test(ex.repRange) ? "/leg" : ""
+            }`;
+
+            const complete = document.createElement("button");
+            complete.className = "complete" + (st.done ? " done" : "");
+            complete.textContent = st.done ? "✓ Set Done" : "Complete Set";
+
+            plus.addEventListener("click", () => {
+              st.reps = Math.min(st.reps + 1, 999);
+              val.textContent = st.reps;
+              saveProgress(activeDay, progress);
+            });
+            minus.addEventListener("click", () => {
+              st.reps = Math.max(st.reps - 1, 0);
+              val.textContent = st.reps;
+              saveProgress(activeDay, progress);
+            });
+            complete.addEventListener("click", () => {
+              st.done = !st.done;
+              complete.classList.toggle("done", st.done);
+              complete.textContent = st.done ? "✓ Set Done" : "Complete Set";
+              setEl.classList.toggle("empty", !st.done);
+              saveProgress(activeDay, progress);
+              if (st.done) {
+                const timerEl = setEl.querySelector(".timer");
+                if (timerEl) {
+                  restCountdown(timerEl, ex.restSec);
+                }
+                if (navigator.vibrate) navigator.vibrate(60);
+                focusNextSetOrExercise(card);
+              }
+            });
+
+            setEl.appendChild(left);
+            setEl.appendChild(target);
+            setsWrap.appendChild(setEl);
+          });
+
+          const rest = document.createElement("div");
+          rest.className = "rest";
+          rest.innerHTML = `<span>⏱️ Rest</span> <span class="timer">--:--</span>`;
+
+          content.appendChild(setsWrap);
+          content.appendChild(rest);
+
+          const pct = percentCompleteFor(progress, idx, ex);
+          const pctEl = document.createElement("div");
+          pctEl.className = "notes";
+          pctEl.textContent = `Completed ${pct}%`;
+          content.appendChild(pctEl);
+
+          card.appendChild(media);
+          card.appendChild(content);
+          exerciseGrid.appendChild(card);
+        });
+
+        if (!exerciseGrid.children.length) {
+          const empty = document.createElement("div");
+          empty.className = "card empty";
+          empty.innerHTML =
+            '<div class="content"><h3 class="title">No exercises match your search.</h3><div class="notes">Try a different keyword.</div></div>';
+          exerciseGrid.appendChild(empty);
+        }
+      }
+
+      function focusNextSetOrExercise(currentCard) {
+        const cards = Array.from(document.querySelectorAll(".card"));
+        const startIdx = cards.indexOf(currentCard);
+        for (let i = startIdx; i < cards.length; i++) {
+          const sets = Array.from(cards[i].querySelectorAll(".complete"));
+          for (const btn of sets) {
+            if (!btn.classList.contains("done")) {
+              cards[i].scrollIntoView({ behavior: "smooth", block: "center" });
+              btn.focus();
+              return;
+            }
+          }
+        }
+      }
+
+      // Controls
+      startBtn.addEventListener("click", () => {
+        workoutStarted = !workoutStarted;
+        startBtn.textContent = workoutStarted
+          ? "⏸ Pause Workout"
+          : "▶ Start Workout";
+        if (workoutStarted) {
+          const firstCompleteBtn = document.querySelector(
+            ".complete:not(.done)"
+          );
+          if (firstCompleteBtn) {
+            firstCompleteBtn
+              .closest(".card")
+              .scrollIntoView({ behavior: "smooth", block: "center" });
+            if (navigator.vibrate) navigator.vibrate(30);
+          }
+        }
+      });
+
+      nextBtn.addEventListener("click", () => {
+        const firstIncomplete = document.querySelector(".complete:not(.done)");
+        if (firstIncomplete) {
+          const card = firstIncomplete.closest(".card");
+          focusNextSetOrExercise(card);
+        } else {
+          alert("Nice! All sets look complete for this view.");
+        }
+      });
+
+      resetBtn.addEventListener("click", () => {
+        if (confirm("Reset today's progress for " + activeDay + "?")) {
+          const key = LS_PROGRESS_PREFIX + todayKey() + "_" + activeDay;
+          localStorage.removeItem(key);
+          renderExercises();
+        }
+      });
+
+      searchInput.addEventListener("input", renderExercises);
+
+      // Initial render
+      renderPills();
+      renderExercises();
+    </script>
+  </body>
+</html>
